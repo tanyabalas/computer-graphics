@@ -1,0 +1,244 @@
+#include <iostream>
+#include <math.h>
+using namespace std;
+#include <algorithm>
+
+void RGB_XYZ (float *RGB, float *XYZ)
+{
+    XYZ[0]=(0.49*RGB[0] + 0.31*RGB[1] + 0.2*RGB[2])/0.17697;
+    XYZ[1]=(0.17697*RGB[0] + 0.81240*RGB[1] + 0.01063*RGB[2])/0.17697;
+    XYZ[2]=(0.01*RGB[1] + 0.99*RGB[2])/0.17697;
+}
+void RGB_CMY(float *RGB, float *CMY)
+{
+    CMY[0]=1-RGB[0];
+    CMY[1]=1-RGB[1];
+    CMY[2]=1-RGB[2];
+}
+void RGB_CMYK (float *CMYK,float *CMY, float *RGB)
+{
+    CMYK[3]=min(min(RGB[0],RGB[2]),min(RGB[2],RGB[1]));
+    CMYK[1]=(CMY[1]-CMYK[3])/(1-CMYK[3]);
+    CMYK[0]=(CMY[0]-CMYK[3])/(1-CMYK[3]);
+    CMYK[2]=(CMY[2]-CMYK[3])/(1-CMYK[3]);
+}
+void RGB_HSV (float *RGB, float *HSV)
+{
+    float minn=0;
+    int i=0;
+    minn = min(min(RGB[0], RGB[2]), min(RGB[2], RGB[1]));
+    HSV[2] = max(max(RGB[0], RGB[2]), max(RGB[2], RGB[1]));
+    HSV[1] = (HSV[2] -minn) / HSV[2];
+
+    if ((RGB[0] >= RGB[1]) && (RGB[0] >= RGB[2])) i = 1;
+    if ((RGB[1] >= RGB[0]) && (RGB[1] >= RGB[2])) i = 2;
+    if ((RGB[2] >= RGB[0]) && (RGB[2] >= RGB[1])) i = 3;
+
+    if (HSV[2] == 0) HSV[1] = 0;
+    switch (i)
+    {
+        case 1:{
+            HSV[0] = 60 * (RGB[1] - RGB[2]) / (HSV[2] - minn); break;}
+        case 2:{
+            HSV[0] = 60 * (2 + (RGB[2] - RGB[0])) / (HSV[2] - minn);break;}
+        case 3:{
+            HSV[0] = 60 * (4 + (RGB[0] - RGB[1])) / (HSV[2] - minn);break;}
+    }
+    while (HSV[0] < 0) HSV[0] = HSV[0] + 360;
+}
+
+void RGB_HSL (float *HSL, float *RGB)
+{
+    float minn=0; float maxx=0;
+    minn = min(min(RGB[0], RGB[2]), min(RGB[2], RGB[1]));
+    maxx = max(max(RGB[0], RGB[2]), max(RGB[2], RGB[1]));
+    HSL[2]=0.5*(maxx+minn);
+    HSL[1]=(maxx-minn)/(1-abs(1-(maxx+minn)));
+    if (maxx==minn) cout<<"H is Undefined";
+    else if (maxx==RGB[0] && RGB[1]>=RGB[2]) HSL[0]=60*(RGB[1]-RGB[2])/(maxx-minn);
+    else if (maxx==RGB[0] && RGB[1]<RGB[2]) HSL[0]=60*(RGB[2]-RGB[0])/(maxx-minn);
+    else if (maxx==RGB[1]) HSL[0]=60*(RGB[2]-RGB[0])/(maxx-minn);
+    else if (maxx==RGB[2]) HSL[0]=60*(RGB[0]-RGB[1])/(maxx-minn);
+}
+
+void CMY_RGB (float *RGB, float *CMY)
+{
+RGB[0]=1-CMY[0];
+RGB[1]=1-CMY[1];
+RGB[2]=1-CMY[2];
+}
+void CMYK_RGB(float *RGB, float *CMYK)
+{
+    RGB[0]= 1 - CMYK[0]*(1-CMYK[3]) - CMYK[3];
+    RGB[1]= 1 - CMYK[1]*(1-CMYK[3]) - CMYK[3];
+    RGB[2]= 1 - CMYK[2]*(1-CMYK[3]) - CMYK[3];
+}
+void HSV_RGB (float *RGB, float *HSV)
+{
+int Hi=0; float Vmin=0; float Vinc=0; float Vdec=0;
+Hi=(HSV[0]/60.0);
+Hi=trunc(HSV[0]/60) - trunc(HSV[0]/60)/6*6;
+Vmin=(100-HSV[1])*HSV[2]/100;
+float a=0;
+a=(HSV[2]-Vmin)*(trunc(HSV[0])/6)/60;
+Vinc=Vmin+a;
+Vdec=HSV[2]-a;
+switch(Hi)
+{
+    case 0: {
+        RGB[0]=HSV[2]; RGB[1]=Vinc; RGB[2]=Vmin; break;}
+    case 1: {
+        RGB[0]=Vdec; RGB[1]=HSV[2]; RGB[2]=Vmin; break;}
+    case 2:{
+        RGB[0]=Vmin; RGB[1]=HSV[2]; RGB[2]=Vinc; break;}
+    case 3:{
+        RGB[0]=Vmin; RGB[1]=Vdec; RGB[2]=HSV[2];break;}
+    case 4:{
+        RGB[0]=Vinc; RGB[1]=Vmin; RGB[2]=HSV[2]; break;}
+    case 5:{
+        RGB[0]=HSV[2]; RGB[1]=Vmin; RGB[2]=Vdec; break;}
+}}
+void HSL_RGB (float *RGB, float *HSL)
+{
+if (HSL[2]==0) RGB[0]=RGB[1]=RGB[2]=HSL[2];
+float temp1=0, temp2=0, temp3R=0, temp3G=0,temp3B=0;
+if (HSL[2]<0.5) temp2=HSL[2]*(1+HSL[1]);
+if (HSL[2]>=0.5) temp2=HSL[2]+HSL[1]-HSL[2]*HSL[1];
+temp1=2.0*HSL[2]-temp2;
+float H=0; H=HSL[0]/360;
+temp3R=H+1.0/3;
+temp3G=H;
+temp3B=H-1.0/3;
+if (temp3R<0)  temp3R=temp3R+1.0;
+if (temp3G<0)  temp3G=temp3G+1.0;
+if (temp3B<0)  temp3B=temp3B+1.0;
+
+if (temp3R<1.0/6) RGB[0]=temp1+((temp2-temp1)*6.0*temp3R);
+else if (temp3R<1.0/2 && temp3R>=1.0/6) RGB[0]=temp2;
+else if (temp3R<2.0/3 && temp3R>=1.0/2)  RGB[0]=temp1+((temp2-temp1)*(2.0/3-temp3R)*6.0);
+else RGB[0]=temp1;
+
+if (temp3R<1.0/6) RGB[1]=temp1+((temp2-temp1)*6.0*temp3G);
+else if (temp3G<1.0/2 && temp3G>=1.0/6) RGB[1]=temp2;
+else if (temp3G<2.0/3 && temp3G>=1.0/2)  RGB[1]=temp1+((temp2-temp1)*(2.0/3-temp3G)*6.0);
+else RGB[1]=temp1;
+
+if (temp3B<1.0/6) RGB[2]=temp1+((temp2-temp1)*6.0*temp3B);
+else if (temp3B<1.0/2 && temp3B>=1.0/6) RGB[2]=temp2;
+else if (temp3B<2.0/3 && temp3B>=1.0/2)  RGB[2]=temp1+((temp2-temp1)*(2.0/3-temp3B)*6.0);
+else RGB[2]=temp1;
+}
+
+int main() {
+    float RGB[3], XYZ[3], CMY[3], CMYK[4], HSV[3], HSL[3];
+    int number_model;
+    cout
+            << "Mark your model: 1-RGB, 2-CMYK, 3-CMYK, 4-HSV, 5-HSL and enter the model that contains your color components: ";
+    cout << endl;
+    cin >> number_model;
+    cout << endl;
+
+    switch (number_model) {
+        case 1: //RGB
+        {
+            cout << "Enter R, G, B, please";
+            cin >> RGB[0] >> RGB[1] >> RGB[2];
+            RGB_HSL(HSL, RGB);
+            cout << "RGB in HSL :" << HSL[0] << " " << HSL[1] << " " << HSL[2] << endl;
+
+            RGB_HSV(RGB, HSV);
+            cout << "RGB in HSV :" << HSV[0] << " " << HSV[1] << " " << HSV[2] << " " << endl;
+
+            RGB_CMY(RGB, CMY);
+            cout << "RGB in CMY :" << CMY[0] << " " << CMY[1] << " " << CMY[2] << " " << endl;
+
+            RGB_CMYK(CMYK, CMY, RGB);
+            cout << "RGB in CMYK :" << CMYK[0] << " " << CMYK[1] << " " << CMYK[2] << " " << CMYK[3] << endl;
+
+            RGB_XYZ(RGB, XYZ);
+            cout << "RGB in XYZ :" << XYZ[0] << " " << XYZ[1] << " " << XYZ[2] << " " << endl;
+            break;
+        }
+        case 2: //CMY
+        {
+            cout << "Enter C, M, Y, please";
+            cin >> CMY[0] >> CMY[1] >> CMY[2];
+            CMY_RGB(RGB, CMY);
+            cout << "CMY in RGB :" << RGB[0] << " " << RGB[1] << " " << RGB[2] << endl;
+
+            RGB_HSV(RGB, HSV);
+            cout << "CMY in HSV :" << HSV[0] << " " << HSV[1] << " " << HSV[2] << " " << endl;
+
+            RGB_HSL(HSL, RGB);
+            cout << "CMY in HSL :" << HSL[0] << " " << HSL[1] << " " << HSL[2] << " " << endl;
+
+            RGB_CMYK(CMYK, CMY, RGB);
+            cout << "CMY in CMYK :" << CMYK[0] << " " << CMYK[1] << " " << CMYK[2] << " " << CMYK[3] << endl;
+
+            RGB_XYZ(RGB, XYZ);
+            cout << "CMY in XYZ :" << XYZ[0] << " " << XYZ[1] << " " << XYZ[2] << " " << endl;
+            break;
+        }
+
+        case 3: //CMYK
+        {
+            cout << "Enter C, M, Y, K please";
+            cin >> CMYK[0] >> CMYK[1] >> CMYK[2] >> CMYK[3];
+            CMYK_RGB(RGB, CMYK);
+            cout << "CMYK in RGB :" << RGB[0] << " " << RGB[1] << " " << RGB[2] << endl;
+
+            RGB_HSV(RGB, HSV);
+            cout << "CMYK in HSV :" << HSV[0] << " " << HSV[1] << " " << HSV[2] << " " << endl;
+
+            RGB_HSL(HSL, RGB);
+            cout << "CMYK in CMY :" << HSL[0] << " " << HSL[1] << " " << HSL[2] << " " << endl;
+
+            RGB_CMY(RGB, CMY);
+            cout << "CMYK in CMY :" << CMY[0] << " " << CMY[1] << " " << CMY[2] << endl;
+
+            RGB_XYZ(RGB, XYZ);
+            cout << "CMYK in XYZ :" << XYZ[0] << " " << XYZ[1] << " " << XYZ[2] << " " << endl;
+            break;
+        }
+        case 4: //HSV
+        {
+            cout << "Enter H, V, S, please";
+            cin >> HSV[0] >> HSV[1] >> HSV[2];
+            HSV_RGB(RGB, HSV);
+            cout << "HSV in RGB :" << RGB[0] << " " << RGB[1] << " " << RGB[2] << endl;
+
+            RGB_HSL(HSL, RGB);
+            cout << "HSV in HSL :" << HSL[0] << " " << HSL[1] << " " << HSL[2] << " " << endl;
+
+            RGB_CMY(RGB, CMY);
+            cout << "HSV in CMY :" << CMY[0] << " " << CMY[1] << " " << CMY[2] << " " << endl;
+
+            RGB_CMYK(CMYK, CMY, RGB);
+            cout << "HSV in CMYK :" << CMYK[0] << " " << CMYK[1] << " " << CMYK[2] << " " << CMYK[3] << endl;
+
+            RGB_XYZ(RGB, XYZ);
+            cout << "HSV in XYZ :" << XYZ[0] << " " << XYZ[1] << " " << XYZ[2] << " " << endl;
+            break;
+        }
+        case 5: //HSL
+        {
+            cout << "Enter H, S, L, please";
+            cin >> HSL[0] >> HSL[1] >> HSL[2];
+            HSL_RGB(HSL, RGB);
+            cout << "HSL in RGB :" << RGB[0] << " " << RGB[1] << " " << RGB[2] << endl;
+
+            RGB_HSV(RGB, HSV);
+            cout << "HSL in HSV :" << HSV[0] << " " << HSV[1] << " " << HSV[2] << " " << endl;
+
+            RGB_CMY(RGB, CMY);
+            cout << "HSL in CMY :" << CMY[0] << " " << CMY[1] << " " << CMY[2] << " " << endl;
+
+            RGB_CMYK(CMYK, CMY, RGB);
+            cout << "HSL in CMYK :" << CMYK[0] << " " << CMYK[1] << " " << CMYK[2] << " " << CMYK[3] << endl;
+
+            RGB_XYZ(RGB, XYZ);
+            cout << "HSL in XYZ :" << XYZ[0] << " " << XYZ[1] << " " << XYZ[2] << " " << endl;
+            break;
+        }
+    }
+}

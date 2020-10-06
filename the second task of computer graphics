@@ -89,7 +89,8 @@ void BrezenhemCircle (int x0, int y0, int R,TGAImage image)
 
         if ((d<0) && (error < 0 ))
         {
-            d+= (2 * ++x +1);
+            x++;
+            d+= (2 * x +1);
             continue;
         }
         if (d>0 && error >0)

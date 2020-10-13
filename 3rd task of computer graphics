@@ -1,0 +1,149 @@
+#include <iostream>
+#include <cmath>
+#include "tgaimage.h"
+#include "tgaimage.cpp"
+ 
+using namespace std;
+ 
+const TGAColor white = TGAColor(255, 255, 255, 255);
+
+ 
+void ModifiedBresenheim(int x0, int y0, int x1, int y1, TGAImage &image)
+{
+    float dx,dy, gradient, y, d;
+    bool k = 0;
+    TGAColor color;
+ 
+    dx=abs(x1 - x0);
+    dy=abs(y1 - y0);
+ 
+    if (dy > dx) 
+    {
+        k = 1;
+        swap(x0, y0);
+        swap(x1, y1);
+    }
+    if (x0>x1)
+    {
+        swap(x0, x1);
+    }
+    if (y0>y0)
+    {
+        swap (y0, y1);
+    }
+ 
+    dx=x1 - x0;
+    dy=y1 - y0;
+    gradient = dy/dx;
+    y=y0 + gradient;
+ 
+  
+   for (int x=x0; x < x1-1; x++)
+    {
+        if (k == 0) {//те если мы идем по х, а не по у
+            d = 1 - y + int(y);
+            color = TGAColor (255*d, 255*d, 255*d, 255);
+            image.set(x, int(y), color);
+            d = y - int(y);
+            color = TGAColor (255*d, 255*d, 255*d, 255);
+            image.set(x, int(y)+1, color);
+            y += gradient;
+        }
+        else {
+            d = 1 - y + int(y);
+            color = TGAColor (255*d, 255*d, 255*d, 255);
+            image.set(int(y), x, color);
+            d = y - int(y);
+            color = TGAColor (255*d, 255*d, 255*d, 255);
+            image.set(int(y)+1, x, color);
+            y += gradient;
+        }
+    }
+}
+ 
+int main() {
+    TGAImage image(1000, 1000, TGAImage::RGB);
+    int x0,y0,y1,x1;
+    cout<< "Please, enter: x0, y0"<<endl;
+    cin>>x0>>y0;
+    cout<<"Please, enter: x1, y1"<<endl;
+    cin>>x1>>y1;
+    ModifiedBresenheim(x0, y0, x1, y1, image);
+    image.write_tga_file("output.tga");
+    return 0;
+}
+ 
+
+void drawAALine(int x0 , int y0 , int x1 , int y1, TGAImage image)
+{
+    if (abs(y1-y0) > abs( x1 - x0))
+    {
+        swap(x0 , y0);
+        swap(x1 , y1);
+    }
+    if (x0 > x1)
+    {
+        swap(x0 ,x1);
+        swap(y0 ,y1);
+    }
+ 
+    float dx = x1-x0, dy = y1-y0;
+    float gradient = dy/dx;
+    TGAColor color;
+    int xpxl1 = x0, xpxl2 = x1;
+ 
+    float y = y0;
+    float d = 0;
+    // основной цикл
+    if (abs(y1-y0) > abs( x1 - x0))
+    {
+        int x;
+        for (x = xpxl1 ; x <=xpxl2 ; x++)
+        {
+            // покрытие пикселей определяется дробным
+            // часть координаты y
+            d = 1  + y - int(y);
+            color = TGAColor(255*d, 255*d, 255*d, 255);
+            image.set(int(y), x, color);
+ 
+            d = y - int(y);
+            color = TGAColor(255*d, 255*d, 255*d, 255);
+            image.set((int(y))-1, x, color);
+ 
+            y += gradient;
+        }
+    }
+    else
+    {
+        int x;
+        for (x = xpxl1 ; x <=xpxl2 ; x++)
+        {
+            // покрытие пикселей определяется дробным
+            // часть координаты y
+            d = 1  + y - int(y);
+            color = TGAColor(255*d, 255*d, 255*d, 255);
+            image.set(x, int(y), color);
+ 
+            d = y - int(y);
+            color = TGAColor(255*d, 255*d, 255*d, 255);
+            image.set(x, int(y)-1, color);
+            y += gradient;
+        }
+    }
+ 
+ 
+}
+ 
+int main() {
+    TGAImage image(1000, 1000, TGAImage::RGB);
+    int x0,y0,y1,x1;
+    cout<< "Please, enter: x0, y0"<<endl;
+    cin>>x0>>y0;
+    cout<<"Please, enter: x1, y1"<<endl;
+    cin>>x1>>y1;
+    ModifiedBresenheim(x0, y0, x1, y1, image);
+    image.write_tga_file("output.tga");
+    drawAALine(x0, y0, x1, y1, image);
+    image.write_tga_file("outputfile2.tga");
+    return 0;
+}
